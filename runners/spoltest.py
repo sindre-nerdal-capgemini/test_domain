@@ -55,15 +55,18 @@ class Spoltest(ABC):
         document_metas = []
 
         for item in self.metas:
+            should_be_present_in_dom = item.get('should_be_present_in_dom', True)
             selector = item.get('css_selector')
-            document_meta = {'css_selector': selector}
+            document_meta = {'css_selector': selector, 'should_be_present_in_dom': should_be_present_in_dom}
 
             node = soup.select_one(selector)
 
             if node:
+                document_meta['exists_in_dom'] = True
                 document_meta['attributes'] = node.attrs
                 document_meta['content'] = node.text
             else:
+                document_meta['exists_in_dom'] = False
                 document_meta['attributes'] = []
                 document_meta['content'] = ''
             document_metas.append(document_meta)

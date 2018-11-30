@@ -38,5 +38,8 @@ class LogglySpoltest(Spoltest):
 
     def after_run(self):
         log = Log(datetime.datetime.now(), self.results)
-        requests.post(self.loggly_url, json=log.serialize())
-        print("Posted results to loggly")
+        loggly_request = requests.post(self.loggly_url, json=log.serialize())
+        if loggly_request.status_code == 200:
+            print("Posted results to loggly")
+        else:
+            print("Could not post results to loggly..")

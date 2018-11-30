@@ -18,8 +18,9 @@ Modul for å kjøre tester mot et domene. Tester blan annet statuskode, response
 ```
 
 ### Metafile
-- description er for å spesifisere en "label" for hva man prøver å hente fra dom.
-- css_selector er "stien" som brukes for å finne fram til elementet man vil finne.
+- **description** er for å spesifisere en "label" for hva man prøver å hente fra dom.
+- **css_selector** er "stien" som brukes for å finne fram til elementet man vil finne.
+- **should_be_present_in_dom** beskriver om elementet skal finnes eller ikke i DOM under test. Defaults til ```true```
 ```json
 {
     "metas": [
@@ -28,8 +29,9 @@ Modul for å kjøre tester mot et domene. Tester blan annet statuskode, response
             "css_selector": "head > meta[name=\"description\"]"
         },
         {
-            "description": "Page meta title",
-            "css_selector": "head > title"
+            "description": "This element should not be present in dom",
+            "css_selector": "head > some > wrong > elm",
+            "should_be_present_in_dom": false
         }
     ]
 }
@@ -87,7 +89,9 @@ Objectet som blir postet til til loggly er da:
                             "attr_key": "",
                             "attr_key2": "",
                         },
-                        "content": ""
+                        "content": "",
+                        "exists_in_dom": false,
+                        "should_be_present_in_dom": false,
                     }
                 ]
             }
