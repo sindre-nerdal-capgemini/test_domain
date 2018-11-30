@@ -42,7 +42,7 @@ Modul for å kjøre tester mot et domene. Tester blan annet statuskode, response
 - Pip
 
 #### Installation
-```python F
+```bash F
 # For å lage et virtuelltmiljø hvor man kan installere dependencies
 python -m venv  path_to_folder
 
@@ -51,7 +51,7 @@ pip install -r requirements.txt
 ```
 
 #### Running the script
-```python
+```bash
 # For å kjøre scriptet
 python run.py
 
