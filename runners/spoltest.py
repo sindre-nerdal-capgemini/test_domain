@@ -63,14 +63,14 @@ class Spoltest(ABC):
             should_be_present_in_dom = item.get('should_be_present_in_dom', True)
             document_meta = {
                 'should_be_present_in_dom': should_be_present_in_dom,
-                'description': item.get('description')
+                'description': item.get('description'),
+                'method': item.get('method'),
+                'path': item.get('path')
                 }
 
-            if item.get('css_selector'):
-                document_meta['css_selector'] = item.get('css_selector')
+            if item.get('method') == 'css_selector':
                 self.parse_html_by_css_selectors(item, req.content, document_meta)
-            elif item.get('xpath'):
-                document_meta['xpath'] = item.get('xpath')
+            elif item.get('method') == 'xpath':
                 self.parse_html_by_xpath(item, tree, document_meta)
 
             document_metas.append(document_meta)
@@ -83,7 +83,7 @@ class Spoltest(ABC):
         document_meta['content'] = ''
         document_meta['exists_in_dom'] = False
         try:
-            elm = tree.xpath(item.get('xpath'))
+            elm = tree.xpath(item.get('path'))
             if elm:
                 document_meta['exists_in_dom'] = True
                 try:
@@ -100,7 +100,7 @@ class Spoltest(ABC):
 
     def parse_html_by_css_selectors(self, item, content, document_meta):
         soup = BeautifulSoup(content, "html.parser")
-        node = soup.select_one(item.get('css_selector'))
+        node = soup.select_one(item.get('path'))
 
         if node:
             document_meta['exists_in_dom'] = True

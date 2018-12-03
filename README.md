@@ -9,7 +9,7 @@ Modul for å kjøre tester mot et domene. Tester blan annet statuskode, response
 - **--meta-file** (Optional) Fil som spesifisere om siden inneholder DOM elementer og attributer.
 - **--timeout-between-each-chunk** (Optional) Timeout mellom hver request (i parllel). DVS hvis requests-in-parallel er 1, så vil det være timeout mellom hvert enkelt request. Hvis requests-in-parallel er 2, vil det være timeout etter hver 2. request. Default er 0.
 - **--pdf-report** (Optional) Hvis man vil generere en pdf report.
-- - **--loggly-token** (Optional) Hvis man vil poste resultat til loggly.
+- **--loggly-token** (Optional) Hvis man vil poste resultat til loggly.
 
 ### UrlFile
 ```
@@ -20,21 +20,26 @@ Modul for å kjøre tester mot et domene. Tester blan annet statuskode, response
 
 ### Metafile
 - **description** er for å spesifisere en "label" for hva man prøver å hente fra dom.
-- **css_selector** er "stien" som brukes for å finne fram til elementet man vil finne.
-- **xpath** er "stien" som brukes for å finne fram til elementet man vil finne.
+- **method** hvilken metode som blir brukt (xpath, css_selector). Defaults til css_selector.
+- **path** er stien til elementet i DOM.
 - **should_be_present_in_dom** beskriver om elementet skal finnes eller ikke i DOM under test. Defaults til ```true```
 ```json
 {
     "metas": [
         {
             "description": "Meta description tag",
-            "css_selector": "head > meta[name=\"description\"]"
+            "path": "head > meta[name=\"description\"]"
         },
         {
             "description": "This element should not be present in dom",
-            "css_selector": "head > some > wrong > elm",
+            "path": "head > some > wrong > elm",
             "should_be_present_in_dom": false
-        }
+        },
+        {
+            "description": "Using xpath",
+            "method": "xpath",
+            "path": "//*[contains(text(),'some string')]"
+        },
     ]
 }
 ```
@@ -58,12 +63,12 @@ pip install -r requirements.txt
 python run.py
 
 # Vil teste alle en etter en.
-# Hvis man får en statuskode mellom 300-399, vil man følge location man får i response, for å se hvor alle redirectne ender.
 # Tester også mot DOM elementer på hver URL.
-python run.py -d https://example.com -f "Path/To/urls.txt" --should-follow-redirects true --meta-file "Path/To/meta.json"
+python run.py --domain https://example.com --file "Path/To/urls.txt" --loggly-token "ad" --meta-file "Path/To/meta.json"
 
-# For å kjøre flere forespørsler parallelt
-python run.py -d https://example.com -f "Path/To/urls.txt" --should-follow-redirects true --meta-file "Path/To/meta.json" --requests-in-parallel 3
+# Vil teste 3 urls om gangen i parallel
+# Hvis man får en statuskode mellom 300-399, vil man følge location man får i response, for å se hvor alle redirectne ender.
+python run.py -d https://example.com -f "Path/To/urls.txt" --should-follow-redirects true --requests-in-parallel 3
 ```
 
 #### Loggly
@@ -91,6 +96,9 @@ Objectet som blir postet til til loggly er da:
                             "attr_key": "",
                             "attr_key2": "",
                         },
+                        "description": "",
+                        "method": "",
+                        "path": "",
                         "content": "",
                         "exists_in_dom": false,
                         "should_be_present_in_dom": false,
