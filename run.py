@@ -12,9 +12,10 @@ parser.add_argument('--file', '-f', help="The inputfile containing rows with a r
 parser.add_argument('--requests-in-parallel', '-rip', nargs='+', help="Number of requests which should run in paralell. Provides a list, to test multiple runs.", type=int, default=[1])
 parser.add_argument('--test-request-count-after-cached', '-rert', help="Specifies how many times each request should be run after the cache is triggered. Defaults to 0, so no extra requests is done. I.E if a cache should be triggered", type= int, default=0)
 parser.add_argument('--should-follow-redirects', '-sfr', help="Test the request result url if the requests returns a 301 status code", type= bool, default=False)
-parser.add_argument('--meta-file', '-mf', help="File containing css selctors for parsing the tested requets's DOM", type= str, default='')
+parser.add_argument('--meta-file', '-mf', help="File containing css selctors for parsing the tested requets's DOM", type= str, default=os.path.join(ROOT_DIR, 'meta.json'))
 parser.add_argument('--timeout-between-each-chunk', '-tbec', help="Sets the timeout between each chunk. I.E if only 1 requests-in-parallel, this would be between each request. If requests-in-parallel > it would be between each 'group'.", type=int, default=0)
 parser.add_argument('--pdf-report', '-pr', help="Generate pdf report", type=bool, default=False)
+parser.add_argument('--chrome-driver', '-cd', help="Path to chrome driver", type=str, default=os.path.join(ROOT_DIR, 'chromedriver.exe'))
 
 
 
@@ -29,6 +30,7 @@ if __name__ == '__main__':
     meta_file =  args.meta_file
     generate_pdf_report =  args.pdf_report
     timeout_between_each_chunk = args.timeout_between_each_chunk
+    chrome_driver = args.chrome_driver
 
     if not os.path.isfile(logfile):
         print(f"File {logfile} is not a file or path is wrong...")
@@ -38,8 +40,8 @@ if __name__ == '__main__':
 
     for request_in_parallel in requests_in_parallel:
         if generate_pdf_report:
-            test = ArchiveSpoltest(domain, logfile, request_in_parallel, test_request_count_after_cached, should_follow_redirects, meta_file, timeout_between_each_chunk, OUTPUT_DIR)
+            test = ArchiveSpoltest(domain, logfile, chrome_driver, request_in_parallel, test_request_count_after_cached, should_follow_redirects, meta_file, timeout_between_each_chunk, OUTPUT_DIR)
         else:
-            test =  LogglySpoltest(domain, logfile, request_in_parallel, test_request_count_after_cached, should_follow_redirects, meta_file, timeout_between_each_chunk, LOGGLY_URL)
+            test =  LogglySpoltest(domain, logfile, chrome_driver, request_in_parallel, test_request_count_after_cached, should_follow_redirects, meta_file, timeout_between_each_chunk, LOGGLY_URL)
 
         test.run()

@@ -12,9 +12,10 @@ class Request:
     size_in_bytes: int
     response_time: int
     meta: List[dict] = field(default_factory=list)
+    id: int = None
 
     def to_csv(self):
-        return [self.url, self.status_code, self.size_in_bytes, '{0:.0f}'.format(self.response_time)]
+        return [self.url, self.status_code, self.size_in_bytes, '{0:.0f}'.format(self.response_time), self.meta, self.id]
 
     @staticmethod
     def headers(identifier: str):
@@ -27,5 +28,6 @@ class Request:
             'size_in_bytes': self.size_in_bytes,
             'status_code': self.status_code,
             'response_time (ms)': self.response_time,
-            'meta': self.meta
+            'meta': self.meta,
+            'id': self.id
         }

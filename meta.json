@@ -1,0 +1,37 @@
+{
+    "metas": [
+        {
+            "description": "Page meta title",
+            "xpath": "/html/head/title"
+        },
+        {
+            "description": "Article title",
+            "xpath": "//*[contains(@type='class', 'c-article__title')]/h1"
+        },
+        {
+            "description": "Content type",
+            "xpath": "//*[contains(@type='class', 'c-article__title')]/p"
+        },
+        {
+            "description": "Google analytics",
+            "xpath": "//*[contains(text(),'\"gaTrackingId\":\"UA-')]"
+        },
+        {
+            "description": "Google tag manager",
+            "xpath": "//*[contains(text(),'\"googleTagManagerId\":\"GTM-')]"
+        },
+        {
+            "description": "\"Innhold mangler\" ",
+            "xpath": "//*[contains(text(),'Innhold mangler')]"
+        },
+        {
+            "description": "\"Ops, noe gikk galt\"",
+            "xpath": "//*[contains(text(),'Ops, noe gikk galt')]"
+        },
+        {
+            "description": "\"Beskrivelse mangler\"",
+            "xpath": "//*[contains(text(),'Beskrivelse mangler')]"
+        }
+    ]
+}
+

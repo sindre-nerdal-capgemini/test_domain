@@ -1,5 +1,4 @@
 import datetime
-import requests
 import sys
 import time
 import os
@@ -10,7 +9,11 @@ import argparse
 import subprocess
 from timeit import default_timer as timer
 from bs4 import BeautifulSoup
+from lxml import etree
 import json
+import requests
+import re
+
 
 from models.benchmark import Benchmark
 from models.request import  Request
@@ -19,7 +22,7 @@ from abc import ABC, abstractmethod
 
 class Spoltest(ABC):
 
-    def __init__(self, domain: str, url_file: str, request_in_parallel: int = 1, test_request_count_after_cached: int = 0, should_follow_redirects: bool = False, dom_meta_file: str = None, timeout_between_each_chunk: int = 0):
+    def __init__(self, domain: str, url_file: str, chrome_driver_path, request_in_parallel: int = 1, test_request_count_after_cached: int = 0, should_follow_redirects: bool = False, dom_meta_file: str = None, timeout_between_each_chunk: int = 0):
         self.domain = domain
         self.url_file = url_file
         self.request_in_parallel = request_in_parallel
@@ -33,6 +36,7 @@ class Spoltest(ABC):
         self.test_run_start = None
         self.test_run_end = None
         self.domain_name = domain.replace("https://", "").replace("http://", "")
+
 
         if self.parse_dom:
             try:
@@ -49,28 +53,64 @@ class Spoltest(ABC):
                 self.metas = []
                 self.parse_dom = False
 
-    def parse_html(self, content):
-        soup = BeautifulSoup(content, "html.parser")
+    def parse_html(self, req):
+        parser = etree.HTMLParser()
+        tree   = etree.HTML(req.text)
+
 
         document_metas = []
 
         for item in self.metas:
             should_be_present_in_dom = item.get('should_be_present_in_dom', True)
-            selector = item.get('css_selector')
-            document_meta = {'css_selector': selector, 'should_be_present_in_dom': should_be_present_in_dom}
+            document_meta = {
+                'should_be_present_in_dom': should_be_present_in_dom,
+                'description': item.get('description')
+                }
 
-            node = soup.select_one(selector)
+            if item.get('css_selector'):
+                document_meta['css_selector'] = item.get('css_selector')
+                self.parse_html_by_css_selectors(item, content, document_meta)
+            elif item.get('xpath'):
+                document_meta['xpath'] = item.get('xpath')
+                self.parse_html_by_xpath(item, tree, document_meta)
 
-            if node:
-                document_meta['exists_in_dom'] = True
-                document_meta['attributes'] = node.attrs
-                document_meta['content'] = node.text
-            else:
-                document_meta['exists_in_dom'] = False
-                document_meta['attributes'] = []
-                document_meta['content'] = ''
             document_metas.append(document_meta)
+
         return document_metas
+
+    def parse_html_by_xpath(self, item, tree, document_meta):
+
+        document_meta['attributes'] = []
+        document_meta['content'] = ''
+        document_meta['exists_in_dom'] = False
+        try:
+            elm = tree.xpath(item.get('xpath'))
+            if elm:
+                document_meta['exists_in_dom'] = True
+                try:
+                    document_meta['content'] = elm[0].text_content()
+                except:
+                    pass
+                try:
+                    document_meta['attributes'] = json.dumps(str(elm[0].attrib))
+                except:
+                    pass
+        except:
+            pass
+
+
+    def parse_html_by_css_selectors(self, item, content, document_meta):
+        soup = BeautifulSoup(content, "html.parser")
+        node = soup.select_one(item.get('css_selector'))
+
+        if node:
+            document_meta['exists_in_dom'] = True
+            document_meta['attributes'] = node.attrs
+            document_meta['content'] = node.text
+        else:
+            document_meta['exists_in_dom'] = False
+            document_meta['attributes'] = []
+            document_meta['content'] = ''
 
     def test_request(self, benchmark: Benchmark):
         """
@@ -89,8 +129,17 @@ class Spoltest(ABC):
             else:
                 location = f'{self.domain}{req_location}'
 
-            metas = self.parse_html(req.content)
-            return Request(location, req.status_code, size, response_time, metas)
+            request_id = None
+            resource_key = '/resource:'
+            if resource_key in benchmark.request_url:
+                splitted_by_colon = benchmark.request_url.split(':')
+                request_id = splitted_by_colon[-1]
+
+            if req.status_code == 200:
+                metas = self.parse_html(req)
+            else:
+                metas = []
+            return Request(location, req.status_code, size, response_time, metas, request_id)
 
 
     def run_speedtest_for_benchmark(self, mark: Benchmark):

@@ -11,7 +11,7 @@ def readFromlog(logfile_path: str, chunk_size: int, domain: str):
         line = 'first'
         line_index = 0
         while line:
-            line = log.readline()
+            line = log.readline().rstrip('\n')
             log_lines.append(Benchmark(f'{domain}{line}', line_index))
             line_index += 1
             chunk_counter += 1

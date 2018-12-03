@@ -10,8 +10,8 @@ from test_result.test_results import TestResult
 from runners.spoltest import Spoltest
 
 class ArchiveSpoltest(Spoltest):
-    def __init__(self, domain, url_file, request_in_parallel, test_request_count_after_cached, should_follow_redirects, dom_meta_file, timeout_between_each_chunk, output_dir):
-        super().__init__(domain, url_file, request_in_parallel, test_request_count_after_cached, should_follow_redirects, dom_meta_file, timeout_between_each_chunk)
+    def __init__(self, domain, url_file, chrome_driver_path, request_in_parallel, test_request_count_after_cached, should_follow_redirects, dom_meta_file, timeout_between_each_chunk, output_dir):
+        super().__init__(domain, url_file, chrome_driver_path, request_in_parallel, test_request_count_after_cached, should_follow_redirects, dom_meta_file, timeout_between_each_chunk)
         self.output_root_dir = output_dir
         self.output_dir = self.output_root_dir
         self.output_file = None
