@@ -22,7 +22,7 @@ from abc import ABC, abstractmethod
 
 class Spoltest(ABC):
 
-    def __init__(self, domain: str, url_file: str, chrome_driver_path, request_in_parallel: int = 1, test_request_count_after_cached: int = 0, should_follow_redirects: bool = False, dom_meta_file: str = None, timeout_between_each_chunk: int = 0):
+    def __init__(self, domain: str, url_file: str, request_in_parallel: int = 1, test_request_count_after_cached: int = 0, should_follow_redirects: bool = False, dom_meta_file: str = None, timeout_between_each_chunk: int = 0):
         self.domain = domain
         self.url_file = url_file
         self.request_in_parallel = request_in_parallel
@@ -57,7 +57,6 @@ class Spoltest(ABC):
         parser = etree.HTMLParser()
         tree   = etree.HTML(req.text)
 
-
         document_metas = []
 
         for item in self.metas:
@@ -69,7 +68,7 @@ class Spoltest(ABC):
 
             if item.get('css_selector'):
                 document_meta['css_selector'] = item.get('css_selector')
-                self.parse_html_by_css_selectors(item, content, document_meta)
+                self.parse_html_by_css_selectors(item, req.content, document_meta)
             elif item.get('xpath'):
                 document_meta['xpath'] = item.get('xpath')
                 self.parse_html_by_xpath(item, tree, document_meta)
@@ -92,7 +91,7 @@ class Spoltest(ABC):
                 except:
                     pass
                 try:
-                    document_meta['attributes'] = json.dumps(str(elm[0].attrib))
+                    document_meta['attributes'] = [{x[0]: x[1]} for x in elm[0].attrib.items()]
                 except:
                     pass
         except:

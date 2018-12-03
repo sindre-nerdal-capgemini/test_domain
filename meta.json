@@ -2,15 +2,15 @@
     "metas": [
         {
             "description": "Page meta title",
-            "xpath": "/html/head/title"
+            "css_selector": "head > title"
         },
         {
             "description": "Article title",
-            "xpath": "//*[contains(@type='class', 'c-article__title')]/h1"
+            "css_selector": ".c-article__title > h1"
         },
         {
             "description": "Content type",
-            "xpath": "//*[contains(@type='class', 'c-article__title')]/p"
+            "css_selector": ".c-article__title.c-article__title--icon > p"
         },
         {
             "description": "Google analytics",

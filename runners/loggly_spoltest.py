@@ -23,8 +23,8 @@ class Log:
         }
 
 class LogglySpoltest(Spoltest):
-    def __init__(self, domain, url_file, chrome_driver_path, request_in_parallel, test_request_count_after_cached, should_follow_redirects, dom_meta_file, timeout_between_each_chunk, loggly_url):
-        super().__init__(domain, url_file, chrome_driver_path, request_in_parallel, test_request_count_after_cached, should_follow_redirects, dom_meta_file, timeout_between_each_chunk)
+    def __init__(self, domain, url_file, request_in_parallel, test_request_count_after_cached, should_follow_redirects, dom_meta_file, timeout_between_each_chunk, loggly_url):
+        super().__init__(domain, url_file, request_in_parallel, test_request_count_after_cached, should_follow_redirects, dom_meta_file, timeout_between_each_chunk)
         self.results = []
         self.loggly_url = loggly_url
 

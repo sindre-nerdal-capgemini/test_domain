@@ -15,7 +15,7 @@ parser.add_argument('--should-follow-redirects', '-sfr', help="Test the request 
 parser.add_argument('--meta-file', '-mf', help="File containing css selctors for parsing the tested requets's DOM", type= str, default=os.path.join(ROOT_DIR, 'meta.json'))
 parser.add_argument('--timeout-between-each-chunk', '-tbec', help="Sets the timeout between each chunk. I.E if only 1 requests-in-parallel, this would be between each request. If requests-in-parallel > it would be between each 'group'.", type=int, default=0)
 parser.add_argument('--pdf-report', '-pr', help="Generate pdf report", type=bool, default=False)
-parser.add_argument('--chrome-driver', '-cd', help="Path to chrome driver", type=str, default=os.path.join(ROOT_DIR, 'chromedriver.exe'))
+parser.add_argument('--loggly-token', '-lt', help="Token for loggly", type=bool, default='')
 
 
 
@@ -30,18 +30,19 @@ if __name__ == '__main__':
     meta_file =  args.meta_file
     generate_pdf_report =  args.pdf_report
     timeout_between_each_chunk = args.timeout_between_each_chunk
-    chrome_driver = args.chrome_driver
+    loggly_token = args.loggly_token
 
     if not os.path.isfile(logfile):
         print(f"File {logfile} is not a file or path is wrong...")
         exit
 
-    LOGGLY_URL = f'https://logs-01.loggly.com/inputs/' # Need token
+
+    LOGGLY_URL = f'https://logs-01.loggly.com/inputs/{loggly_token}'
 
     for request_in_parallel in requests_in_parallel:
         if generate_pdf_report:
-            test = ArchiveSpoltest(domain, logfile, chrome_driver, request_in_parallel, test_request_count_after_cached, should_follow_redirects, meta_file, timeout_between_each_chunk, OUTPUT_DIR)
-        else:
-            test =  LogglySpoltest(domain, logfile, chrome_driver, request_in_parallel, test_request_count_after_cached, should_follow_redirects, meta_file, timeout_between_each_chunk, LOGGLY_URL)
-
-        test.run()
+            test = ArchiveSpoltest(domain, logfile, request_in_parallel, test_request_count_after_cached, should_follow_redirects, meta_file, timeout_between_each_chunk, OUTPUT_DIR)
+            test.run()
+        if loggly_token:
+            test =  LogglySpoltest(domain, logfile, request_in_parallel, test_request_count_after_cached, should_follow_redirects, meta_file, timeout_between_each_chunk, LOGGLY_URL)
+            test.run()
