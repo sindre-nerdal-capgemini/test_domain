@@ -1,21 +1,6 @@
 {
     "metas": [
         {
-            "description": "Page meta title",
-            "method": "css_selector",
-            "path": "head > title"
-        },
-        {
-            "description": "Article title",
-            "method": "css_selector",
-            "path": ".c-article__title > h1"
-        },
-        {
-            "description": "Content type",
-            "method": "css_selector",
-            "path": ".c-article__title.c-article__title--icon > p"
-        },
-        {
             "description": "Google analytics",
             "method": "xpath",
             "path": "//*[contains(text(),'\"gaTrackingId\":\"UA-')]"
@@ -50,7 +35,7 @@
             "should_be_present_in_dom": false
         },
         {
-            "description": "\"Beskrivelse mangler\"",
+            "description": "ndla.no/404 linker eksisterer",
             "method": "xpath",
             "path": "//a[contains(@href,'ndla.no/404')]",
             "should_be_present_in_dom": false
