@@ -1,7 +1,7 @@
 import csv
 from models.benchmark import Benchmark
 
-def readFromlog(logfile_path: str, chunk_size: int, domain: str):
+def readFromlog(logfile_path: str, chunk_size: int):
     """
     A generator function that reads a chunk (x lines) at the time from a file
     """
@@ -12,8 +12,8 @@ def readFromlog(logfile_path: str, chunk_size: int, domain: str):
         line_index = 0
         while line:
             line = log.readline().rstrip('\n')
-            log_lines.append(Benchmark(f'{domain}{line}', line_index))
             line_index += 1
+            log_lines.append(Benchmark(line, line_index))
             chunk_counter += 1
 
             if chunk_counter >= chunk_size:
@@ -32,3 +32,11 @@ def saveHeadersAsCsv(csv_path: str, headers: list):
     with open(csv_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file, delimiter=',')
         writer.writerow(headers)
+
+
+def save_file(file, data):
+    with open(file, 'w') as f:
+        try:
+            f.write(data)
+        except:
+            print(f'Could not save file: {file}')

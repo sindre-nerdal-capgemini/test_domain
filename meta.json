@@ -28,17 +28,32 @@
         {
             "description": "\"Innhold mangler\" ",
             "method": "xpath",
-            "path": "//*[contains(text(),'Innhold mangler')]"
+            "path": "//*[contains(text(),'Innhold mangler')]",
+            "should_be_present_in_dom": false
         },
         {
             "description": "\"Ops, noe gikk galt\"",
             "method": "xpath",
-            "path": "//*[contains(text(),'Ops, noe gikk galt')]"
+            "path": "//*[contains(text(),'Ops, noe gikk galt')]",
+            "should_be_present_in_dom": false
         },
         {
             "description": "\"Beskrivelse mangler\"",
             "method": "xpath",
-            "path": "//*[contains(text(),'Beskrivelse mangler')]"
+            "path": "//*[contains(text(),'Beskrivelse mangler')]",
+            "should_be_present_in_dom": false
+        },
+        {
+            "description": "\"Beskrivelse mangler\"",
+            "method": "xpath",
+            "path": "//*[contains(text(),'Beskrivelse mangler')]",
+            "should_be_present_in_dom": false
+        },
+        {
+            "description": "\"Beskrivelse mangler\"",
+            "method": "xpath",
+            "path": "//a[contains(@href,'ndla.no/404')]",
+            "should_be_present_in_dom": false
         }
     ]
 }

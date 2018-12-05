@@ -17,21 +17,23 @@ import re
 
 from models.benchmark import Benchmark
 from models.request import  Request
-from utilities.file_handler import readFromlog
+from utilities.file_handler import readFromlog, save_file
 from abc import ABC, abstractmethod
+
+
 
 class Spoltest(ABC):
 
-    def __init__(self, domain: str, url_file: str, request_in_parallel: int = 1, test_request_count_after_cached: int = 0, should_follow_redirects: bool = False, dom_meta_file: str = None, timeout_between_each_chunk: int = 0):
+    def __init__(self, domain: str, request_in_parallel: int = 1, test_request_count_after_cached: int = 0, should_follow_redirects: bool = False, dom_meta_file: str = None, timeout_between_each_chunk: int = 0, output_dir: str=''):
         self.domain = domain
-        self.url_file = url_file
+        self.files = []
         self.request_in_parallel = request_in_parallel
         self.test_request_count_after_cached = test_request_count_after_cached
         self.should_follow_redirects = should_follow_redirects
         self.parse_dom = dom_meta_file is not None
         self.dom_meta_file = dom_meta_file
         self.timeout_between_each_chunk = timeout_between_each_chunk
-
+        self.output_dir = output_dir
         self.metas = []
         self.test_run_start = None
         self.test_run_end = None
@@ -73,7 +75,10 @@ class Spoltest(ABC):
             elif item.get('method') == 'xpath':
                 self.parse_html_by_xpath(item, tree, document_meta)
 
-            document_metas.append(document_meta)
+            if document_meta.get('should_be_present_in_dom') and not document_meta.get('exists_in_dom'):
+                document_metas.append(document_meta)
+            elif not document_meta.get('should_be_present_in_dom') and document_meta.get('exists_in_dom'):
+                document_metas.append(document_meta)
 
         return document_metas
 
@@ -111,7 +116,7 @@ class Spoltest(ABC):
             document_meta['attributes'] = []
             document_meta['content'] = ''
 
-    def test_request(self, benchmark: Benchmark):
+    def test_request(self, benchmark: Benchmark, request_id=None):
         """
         Exectutes a request on a benchmark and times the response time.
         Then the repsonsetime, size of the document, status code and location header is saved on the benchmark object.
@@ -128,16 +133,11 @@ class Spoltest(ABC):
             else:
                 location = f'{self.domain}{req_location}'
 
-            request_id = None
-            resource_key = '/resource:'
-            if resource_key in benchmark.request_url:
-                splitted_by_colon = benchmark.request_url.split(':')
-                request_id = splitted_by_colon[-1]
-
             if req.status_code == 200:
                 metas = self.parse_html(req)
             else:
                 metas = []
+
             return Request(location, req.status_code, size, response_time, metas, request_id)
 
 
@@ -151,27 +151,34 @@ class Spoltest(ABC):
         Returns:
             List of all the tested benchmarks
         """
+        resource_key = '/resource:'
+        if resource_key in mark.request_url:
+            splitted_by_colon = mark.request_url.split(':')
+            request_id = splitted_by_colon[-1]
+
         tested_benchmarks = [mark]
         for _ in range(5):
             testable_mark = tested_benchmarks[-1]
             try:
                 testable_mark.timestamp = datetime.datetime.now()
-                testable_mark.test = self.test_request(testable_mark)
+                testable_mark.test = self.test_request(testable_mark, request_id)
                 # Do additional tests after triggered the server cache
                 if self.test_request_count_after_cached > 0:
                     testable_mark.cachedRequests = []
                     for _ in range(self.test_request_count_after_cached):
-                        testable_mark.cachedRequests.append(self.test_request(testable_mark))
+                        testable_mark.cachedRequests.append(self.test_request(testable_mark, request_id))
 
             except Exception as e:
                 testable_mark.test = Request(f"Error {e}", -1, -1, -1)
+                tested_benchmarks.append(testable_mark)
 
             if self.should_follow_redirects and 301 <= testable_mark.test.status_code <= 302:
                 new_mark = Benchmark(testable_mark.test.url, testable_mark.log_line_number)
                 tested_benchmarks.append(new_mark)
             else:
                 break
-        return tested_benchmarks
+        return [x for x in tested_benchmarks if x.contains_errors()]
+
 
     async def run_speedtest_for_list_of_benchmarks(self, marks, workers: int):
         """
@@ -195,18 +202,14 @@ class Spoltest(ABC):
                     result.append(line)
         return result
 
-
-    def run(self):
-        self.test_run_start = datetime.datetime.now()
-        self.before_run()
-
+    def run_file(self, file):
         time_start = time.time()
         loop = asyncio.get_event_loop()
         chunk_index = 1
         log_lines_count = 0
 
         # Testloop which tests and persist a chunk from the logfile
-        for benchmarks in readFromlog(self.url_file, self.request_in_parallel, self.domain):
+        for benchmarks in readFromlog(file, self.request_in_parallel):
             chunk_time_start = time.time()
             log_lines_count += len(benchmarks)
 
@@ -214,14 +217,51 @@ class Spoltest(ABC):
             self.handle_tests_after_each_chunk(tested_marks)
 
             chunk_time_end = time.time() - chunk_time_start
-            print(f'Completed prosessing chunk {chunk_index} with size {self.request_in_parallel} in {chunk_time_end} seconds')
+            #print(f'Completed prosessing chunk {chunk_index} with size {self.request_in_parallel} in {chunk_time_end} seconds')
 
             time.sleep(self.timeout_between_each_chunk)
             chunk_index += 1
 
         time_end = time.time() - time_start
-        print(f'Total time for {log_lines_count} log lines is {time_end} seconds.')
+        print(f'File {os.path.basename(file)}: Total time for {log_lines_count} log lines is {time_end} seconds.')
+
+    def download_files(self):
+        sitemap_name = 'sitemap.xml'
+        sitemap = requests.get(f'{self.domain}/{sitemap_name}')
+        save_file(os.path.join(self.output_dir, sitemap_name), sitemap.text)
+        self.files = []
+
+        with open(os.path.join(self.output_dir, sitemap_name)) as xml_file:
+            sitemap_namespace = 'http://www.sitemaps.org/schemas/sitemap/0.9'
+            root    = etree.parse(xml_file)
+            files = root.findall(f'.//{{{sitemap_namespace}}}sitemap')
+
+            for f in files:
+                location = f.find(f'.//{{{sitemap_namespace}}}loc')
+                if not location.text:
+                    continue
+
+                filename = location.text.split('/')[-1]
+                if filename.endswith('.xml'):
+                    continue
+                file_data = requests.get(location.text)
+                file_path = os.path.join(self.output_dir, filename)
+                save_file(file_path, file_data.text)
+                self.files.append(file_path)
+
+                print(f'Downloaded files: {filename}')
+
+    def run(self):
+        self.test_run_start = datetime.datetime.now()
+        self.before_run()
+
+        self.download_files()
+
+        for file in self.files:
+            self.run_file(file)
+
         self.test_run_end = datetime.datetime.now()
+        print(f'Total running time {self.test_run_end - self.test_run_start}')
         self.after_run()
 
     @abstractmethod

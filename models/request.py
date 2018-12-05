@@ -31,3 +31,6 @@ class Request:
             'meta': self.meta,
             'id': self.id
         }
+
+    def contains_errors(self):
+        return len(self.meta) > 0 or self.status_code < 200 or self.status_code > 399

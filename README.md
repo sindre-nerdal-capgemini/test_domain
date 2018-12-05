@@ -1,13 +1,12 @@
 # Test urls
 Modul for å kjøre tester mot et domene. Tester blan annet statuskode, response tid per ur. Og har også valget å følge alle redirects til de treffer 200 eller går i loop.
 
-- **--domain** (Required) Domene man vil kjøre mot "https://example.com"
-- **--file** (Required) Sti til fil som inneholder relative urls
-- **--requests-in-parallel** (Optional) Antall requests som skal kjøres parallelt. Default er at de kjører synkront, en etter en. Default er 1.
-- **--test-requests-count-after-cached** (Optional) For å teste responsetid etter en cache er utløst må man spesifisere antall "cache triggers". Default er 0.
-- **--should-follow-redirects** (Optional) Må settes til true hvis man er interressert i å følge etter response URl man får fra requests med status kode 300-399. Altså vil da følge redirects helt til den får en 200 eller har fått den samme URL i retur 5 ganger. Default er false.
-- **--meta-file** (Optional) Fil som spesifisere om siden inneholder DOM elementer og attributer.
-- **--timeout-between-each-chunk** (Optional) Timeout mellom hver request (i parllel). DVS hvis requests-in-parallel er 1, så vil det være timeout mellom hvert enkelt request. Hvis requests-in-parallel er 2, vil det være timeout etter hver 2. request. Default er 0.
+- **--domain** (Optional) Domene man vil kjøre mot. Defaults til ```https://ndla.no```
+- **--requests-in-parallel** (Optional) Antall requests som skal kjøres parallelt. Default er at de kjører synkront, en etter en. Default er ```1```.
+- **--test-requests-count-after-cached** (Optional) For å teste responsetid etter en cache er utløst må man spesifisere antall "cache triggers". Default er ```0```.
+- **--should-follow-redirects** (Optional) Må settes til true hvis man er interressert i å følge etter response URl man får fra requests med status kode 300-399. Altså vil da følge redirects helt til den får en 200 eller har fått den samme URL i retur 5 ganger. Default er ```false```.
+- **--meta-file** (Optional) Fil som spesifisere om siden inneholder DOM elementer og attributer. Defaults til ```dir_of_readme/meta.json```.
+- **--timeout-between-each-chunk** (Optional) Timeout mellom hver request (i parllel). DVS hvis requests-in-parallel er 1, så vil det være timeout mellom hvert enkelt request. Hvis requests-in-parallel er 2, vil det være timeout etter hver 2. request. Default er ```0```.
 - **--pdf-report** (Optional) Hvis man vil generere en pdf report.
 - **--loggly-token** (Optional) Hvis man vil poste resultat til loggly.
 

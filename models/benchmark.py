@@ -34,3 +34,7 @@ class Benchmark:
         if self.cachedRequests:
             d['cachedRequests'] = [x.serialize() for x in self.cachedRequests]
         return d
+
+    def contains_errors(self):
+
+        return self.test.contains_errors()
