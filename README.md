@@ -80,15 +80,15 @@ Objectet som blir postet til til loggly er da:
     "timestamp": "",
     "logs":[
         {
-            "log_line_number": 0,
+            "log_line_number": "",
             "request_url": "url",
             "timestamp": "",
             "request": {
                 "header location": "",
-                "response_time (ms)": 0,
-                "size_in_bytes": 0,
-                "status_code": 200,
-                "meta": [
+                "response_time (ms)": "",
+                "size_in_bytes": "",
+                "status_code": "",
+                "errors": [
                     {
                         "css_selector": "",
                         "attributes": {

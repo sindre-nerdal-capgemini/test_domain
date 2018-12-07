@@ -20,7 +20,12 @@ from models.request import  Request
 from utilities.file_handler import readFromlog, save_file
 from abc import ABC, abstractmethod
 
-
+STATUS_CODES = {
+    '200': 'OK',
+    '307': 'Temporary Redirect',
+    '400': 'Bad Request',
+    '404': 'Not Found',
+}
 
 class Spoltest(ABC):
 
@@ -34,7 +39,8 @@ class Spoltest(ABC):
         self.dom_meta_file = dom_meta_file
         self.timeout_between_each_chunk = timeout_between_each_chunk
         self.output_dir = output_dir
-        self.metas = []
+        self.search_for_errors = []
+        self.error_meta = []
         self.test_run_start = None
         self.test_run_end = None
         self.domain_name = domain.replace("https://", "").replace("http://", "")
@@ -44,26 +50,24 @@ class Spoltest(ABC):
             try:
                 with open(self.dom_meta_file) as f:
                     try:
-                        self.metas = json.load(f, encoding='utf-8').get('metas')
-
-                        if not (self.metas or isinstance(self.metas, list)):
-                            self.metas = []
+                        file = json.load(f, encoding='utf-8')
+                        self.search_for_errors = file.get('search_for_errors', [])
+                        self.error_meta = file.get('error_metas', [])
                     except:
-                        self.metas = []
+                        pass
             except:
                 print(f"Could not get metas from file {self.dom_meta_file}")
-                self.metas = []
                 self.parse_dom = False
 
     def parse_html(self, req):
         parser = etree.HTMLParser()
         tree   = etree.HTML(req.text)
 
-        document_metas = []
+        document_errors = []
 
-        for item in self.metas:
+        for item in self.search_for_errors:
             should_be_present_in_dom = item.get('should_be_present_in_dom', True)
-            document_meta = {
+            document_error = {
                 'should_be_present_in_dom': should_be_present_in_dom,
                 'description': item.get('description'),
                 'method': item.get('method'),
@@ -71,50 +75,89 @@ class Spoltest(ABC):
                 }
 
             if item.get('method') == 'css_selector':
-                self.parse_html_by_css_selectors(item, req.content, document_meta)
+                self.parse_html_by_css_selectors(item, req.content, document_error)
             elif item.get('method') == 'xpath':
-                self.parse_html_by_xpath(item, tree, document_meta)
+                self.parse_html_by_xpath(item, tree, document_error)
 
-            if document_meta.get('should_be_present_in_dom') and not document_meta.get('exists_in_dom'):
-                document_metas.append(document_meta)
-            elif not document_meta.get('should_be_present_in_dom') and document_meta.get('exists_in_dom'):
-                document_metas.append(document_meta)
+            if document_error.get('should_be_present_in_dom') and not document_error.get('exists_in_dom'):
+                document_errors.append(document_error)
+            elif not document_error.get('should_be_present_in_dom') and document_error.get('exists_in_dom'):
+                document_errors.append(document_error)
 
-        return document_metas
+        meta = {}
+        if document_errors:
+            meta = self.parse_html_error_meta(tree)
 
-    def parse_html_by_xpath(self, item, tree, document_meta):
+        return document_errors, meta
 
-        document_meta['attributes'] = []
-        document_meta['content'] = ''
-        document_meta['exists_in_dom'] = False
+    def parse_html_error_meta(self, tree):
+        error_metas = {}
+        for error_meta in self.error_meta:
+            path = error_meta.get('path')
+            name = error_meta.get('name')
+
+            if not path or not name:
+                continue
+            element = tree.find(path)
+            if element is not None and element.text:
+                error_metas[name] = element.text
+        return error_metas
+
+    def parse_html_by_xpath(self, item, tree, document_error):
+
+        document_error['attributes'] = []
+        document_error['content'] = ''
+        document_error['exists_in_dom'] = False
         try:
             elm = tree.xpath(item.get('path'))
             if elm:
-                document_meta['exists_in_dom'] = True
+                document_error['exists_in_dom'] = True
                 try:
-                    document_meta['content'] = elm[0].text_content()
+                    document_error['content'] = elm[0].text_content()
                 except:
                     pass
                 try:
-                    document_meta['attributes'] = [{x[0]: x[1]} for x in elm[0].attrib.items()]
+                    document_error['attributes'] = [{x[0]: x[1]} for x in elm[0].attrib.items()]
                 except:
                     pass
         except:
             pass
 
 
-    def parse_html_by_css_selectors(self, item, content, document_meta):
+    def parse_html_by_css_selectors(self, item, content, document_error):
         soup = BeautifulSoup(content, "html.parser")
         node = soup.select_one(item.get('path'))
 
         if node:
-            document_meta['exists_in_dom'] = True
-            document_meta['attributes'] = node.attrs
-            document_meta['content'] = node.text
+            document_error['exists_in_dom'] = True
+            document_error['attributes'] = node.attrs
+            document_error['content'] = node.text
         else:
-            document_meta['exists_in_dom'] = False
-            document_meta['attributes'] = []
-            document_meta['content'] = ''
+            document_error['exists_in_dom'] = False
+            document_error['attributes'] = []
+            document_error['content'] = ''
+
+    def add_error_meta(self, req):
+        parser = etree.HTMLParser()
+        tree   = etree.HTML(req.text)
+
+        document_metas = {}
+        title = tree.find(".//div[@class='c-article__header']//h1")
+        content_type = tree.find(".//div[@class='c-article__title c-article__title--icon']//p")
+        topic_title = tree.find(".//h1[@class='c-resources__topic-title']")
+
+        if title is not None and title.text:
+            document_metas['title'] = title.text
+        if content_type is not None and content_type.text:
+            document_metas['content_type'] = content_type.text
+        if topic_title is not None and topic_title.text:
+            document_metas['topic_title'] = topic_title.text
+
+
+        return document_metas
+
+
+
 
     def test_request(self, benchmark: Benchmark, request_id=None):
         """
@@ -122,6 +165,7 @@ class Spoltest(ABC):
         Then the repsonsetime, size of the document, status code and location header is saved on the benchmark object.
         """
         start = time.time()
+        benchmark.timestamp = datetime.datetime.now()
         with requests.get(benchmark.request_url, allow_redirects=False) as req:
             response_time = (time.time() - start) * 1000
             size = sum(len(chunk) for chunk in req.iter_content())
@@ -133,12 +177,15 @@ class Spoltest(ABC):
             else:
                 location = f'{self.domain}{req_location}'
 
+            status_message= STATUS_CODES[str(req.status_code)]
             if req.status_code == 200:
-                metas = self.parse_html(req)
+                errors, error_meta = self.parse_html(req)
             else:
-                metas = []
+                errors = []
+                error_meta = []
 
-            return Request(location, req.status_code, size, response_time, metas, request_id)
+
+            return Request(location, req.status_code, size, response_time, errors, error_meta, request_id, status_message=status_message)
 
 
     def run_speedtest_for_benchmark(self, mark: Benchmark):
@@ -177,6 +224,7 @@ class Spoltest(ABC):
                 tested_benchmarks.append(new_mark)
             else:
                 break
+
         return [x for x in tested_benchmarks if x.contains_errors()]
 
 
@@ -250,6 +298,7 @@ class Spoltest(ABC):
                 self.files.append(file_path)
 
                 print(f'Downloaded files: {filename}')
+                break
 
     def run(self):
         self.test_run_start = datetime.datetime.now()

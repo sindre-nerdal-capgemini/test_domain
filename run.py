@@ -14,7 +14,7 @@ parser.add_argument('--should-follow-redirects', '-sfr', help="Test the request 
 parser.add_argument('--meta-file', '-mf', help="File containing css selctors for parsing the tested requets's DOM", type= str, default=os.path.join(ROOT_DIR, 'meta.json'))
 parser.add_argument('--timeout-between-each-chunk', '-tbec', help="Sets the timeout between each chunk. I.E if only 1 requests-in-parallel, this would be between each request. If requests-in-parallel > it would be between each 'group'.", type=int, default=0)
 parser.add_argument('--pdf-report', '-pr', help="Generate pdf report", type=bool, default=False)
-parser.add_argument('--loggly-token', '-lt', help="Token for loggly", type=bool, default='')
+parser.add_argument('--loggly-token', '-lt', help="Token for loggly", type=str, default='')
 
 
 
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     timeout_between_each_chunk = args.timeout_between_each_chunk
     loggly_token = args.loggly_token
 
-    LOGGLY_URL = f'https://logs-01.loggly.com/inputs/{loggly_token}'
+    LOGGLY_URL = f'https://logs-01.loggly.com/inputs/{loggly_token}/tag/ndla-articles'
 
     for request_in_parallel in requests_in_parallel:
         if generate_pdf_report:

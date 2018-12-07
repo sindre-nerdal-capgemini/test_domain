@@ -15,7 +15,11 @@ def readFromlog(logfile_path: str, chunk_size: int):
             line_index += 1
             log_lines.append(Benchmark(line, line_index))
             chunk_counter += 1
-
+            yield [Benchmark('https://www.spoletest.api.ndla.no/subjects/subject:36/topic:1:193489/topic:1:105870/topic:1:105873/resource:1:109959', line_index),
+            Benchmark('https://www.spoletest.api.ndla.no/subjects/subject:21/topic:1:172929/topic:1:172937/resource:1:175517', line_index),
+            Benchmark('https://ndla.no/subjects/subject:3/topic:1:179373/topic:1:170165/resource:1:168389', line_index)
+            ]
+            return
             if chunk_counter >= chunk_size:
                 chunk_counter = 0
                 yield log_lines

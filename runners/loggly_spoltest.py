@@ -38,9 +38,13 @@ class LogglySpoltest(Spoltest):
 
     def after_run(self):
         log = Log(datetime.datetime.now(), self.results)
-        print(log.serialize())
-        loggly_request = requests.post(self.loggly_url, json=log.serialize())
-        if loggly_request.status_code == 200:
-            print("Posted results to loggly")
+
+        all_posted_to_loggly = True
+        for benchmark in log.benchmarks:
+            loggly_request = requests.post(self.loggly_url, json=benchmark.serialize())
+            if loggly_request.status_code != 200:
+                all_posted_to_loggly = False
+        if all_posted_to_loggly:
+            print('All logs was posted successfull to loggly')
         else:
-            print("Could not post results to loggly..")
+            print('Not all logs was posted to loggly')

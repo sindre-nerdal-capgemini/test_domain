@@ -1,5 +1,5 @@
 {
-    "metas": [
+    "search_for_errors": [
         {
             "description": "Google analytics",
             "method": "xpath",
@@ -39,6 +39,20 @@
             "method": "xpath",
             "path": "//a[contains(@href,'ndla.no/404')]",
             "should_be_present_in_dom": false
+        }
+    ],
+    "error_metas": [
+        {
+            "name": "Article title",
+            "path": ".//div[@class='c-article__header']//h1"
+        },
+        {
+            "name": "Article type",
+            "path": ".//div[@class='c-article__title c-article__title--icon']//p"
+        },
+        {
+            "name": "Topic title",
+            "path": ".//h1[@class='c-resources__topic-title']"
         }
     ]
 }
